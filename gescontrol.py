@@ -33,16 +33,16 @@ class GestureControlNode(Node):
         # Configuration parameters
         self.linear_speed = 0.27
         self.angular_speed = 1.0
-        self.stop_distance = 300  # Threshold for palm size to stop movement
+        self.stop_distance = 300 
 
         # Robot state
         self.last_cmd = Twist()
         
         # ZigZag parameters
         self.zigzag_start_time = None
-        self.zigzag_phase_duration = 2.0  # Time in seconds for each zigzag segment
-        self.zigzag_forward_speed = 0.3   # Forward speed during zigzag
-        self.zigzag_turn_speed = 1.2      # Turning speed during zigzag
+        self.zigzag_phase_duration = 2.0
+        self.zigzag_forward_speed = 0.3
+        self.zigzag_turn_speed = 1.2
         self.zigzag_active = False
 
     def detect_gesture(self, hand_landmarks, frame_shape):
@@ -51,7 +51,7 @@ class GestureControlNode(Node):
         
         # Get fingertip positions
         fingertips = []
-        finger_indices = [4, 8, 12, 16, 20]  # thumb, index, middle, ring, pinky
+        finger_indices = [4, 8, 12, 16, 20]
         for idx in finger_indices:
             x = int(hand_landmarks.landmark[idx].x * width)
             y = int(hand_landmarks.landmark[idx].y * height)
@@ -77,13 +77,12 @@ class GestureControlNode(Node):
         # Vertical position of palm (used for forward/backward)
         vertical_position = palm_center_y / height  # 0 to 1
         
-        # Calculate finger states (up or down)
         fingers_up = []
         
         # Special check for thumb - based on horizontal position relative to thumb base
         thumb_tip_x = hand_landmarks.landmark[4].x
         thumb_base_x = hand_landmarks.landmark[2].x
-        if (thumb_tip_x < thumb_base_x):  # For right hand
+        if (thumb_tip_x < thumb_base_x):
             fingers_up.append(1)
         else:
             fingers_up.append(0)
@@ -92,7 +91,7 @@ class GestureControlNode(Node):
         for idx in range(1, 5):
             fingertip_y = hand_landmarks.landmark[finger_indices[idx]].y
             pip_y = hand_landmarks.landmark[finger_indices[idx] - 2].y
-            if fingertip_y < pip_y:  # If fingertip is above pip
+            if fingertip_y < pip_y: 
                 fingers_up.append(1)
             else:
                 fingers_up.append(0)
@@ -100,9 +99,6 @@ class GestureControlNode(Node):
         # Detect gestures based on finger states
         gesture = "unknown"
         
-        # ИЗМЕНЁННЫЕ ЖЕСТЫ:
-        
-        # Кулак (все пальцы опущены) - Стоп
         if sum(fingers_up) == 0:
             gesture = "stop"
         
@@ -199,8 +195,8 @@ class GestureControlNode(Node):
                 
             elif gesture == "position_control":
                 # Control direction based on hand position
-                twist.linear.x = self.linear_speed * (1.0 - vertical_position * 2.0)  # Up = forward, down = backward
-                twist.angular.z = -self.angular_speed * normalized_offset  # Left/right controls turning
+                twist.linear.x = self.linear_speed * (1.0 - vertical_position * 2.0)
+                twist.angular.z = -self.angular_speed * normalized_offset 
                 # Reset zigzag state
                 self.zigzag_active = False
                 self.zigzag_start_time = None
@@ -220,7 +216,7 @@ class GestureControlNode(Node):
                 turn_intensity = min(1.5, max(0.5, palm_size / 300))
                 
                 # Use vertical position to adjust forward speed
-                speed_adjustment = 1.0 - (vertical_position * 0.5)  # Top of frame = faster
+                speed_adjustment = 1.0 - (vertical_position * 0.5)
                 
                 # Calculate which phase of zigzag we're in
                 phase = (elapsed_time % (self.zigzag_phase_duration * 2)) / self.zigzag_phase_duration
